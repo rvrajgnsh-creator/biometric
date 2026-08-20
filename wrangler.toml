@@ -1,6 +1,6 @@
 name = "document-biometric-attendance"
 
-main = "document-attendance/src/index.js"
+main = "src/index.js"
 
 compatibility_date = "2026-08-20"
 
