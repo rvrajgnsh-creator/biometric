@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1"
+>
+
+<title>Original Document Record</title>
+
+<script src="https://unpkg.com/@simplewebauthn/browser@13.3.2/dist/bundle/index.umd.min.js"></script>
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background: #f3f6fa;
+
+    color: #172033;
+}
+
+
+.container {
+
+    max-width: 620px;
+
+    margin: auto;
+
+    padding: 20px;
+}
+
+
+.card {
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 24px;
+
+    box-shadow:
+        0 8px 30px
+        rgba(0,0,0,.08);
+}
+
+
+h1 {
+
+    margin-top: 0;
+
+    font-size: 24px;
+
+}
+
+
+label {
+
+    display: block;
+
+    font-weight: 600;
+
+    margin-top: 18px;
+
+    margin-bottom: 7px;
+
+}
+
+
+.required::after {
+
+    content: " *";
+
+    color: #d32f2f;
+
+}
+
+
+input,
+select {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #ccd3df;
+
+    border-radius: 10px;
+
+    font-size: 16px;
+
+}
+
+
+.document {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin: 10px 0;
+
+}
+
+
+.document input {
+
+    width: 20px;
+
+    height: 20px;
+
+}
+
+
+.document label {
+
+    margin: 0;
+
+    font-weight: 400;
+
+}
+
+
+button {
+
+    width: 100%;
+
+    border: 0;
+
+    border-radius: 11px;
+
+    padding: 14px;
+
+    margin-top: 25px;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    color: white;
+
+    background: #1755a6;
+
+}
+
+
+button:disabled {
+
+    opacity: .55;
+
+}
+
+
+#status {
+
+    display: none;
+
+    margin-top: 18px;
+
+    padding: 13px;
+
+    border-radius: 10px;
+
+}
+
+
+.success {
+
+    display: block !important;
+
+    background: #e8f6ed;
+
+    color: #176b3a;
+
+}
+
+
+.error {
+
+    display: block !important;
+
+    background: #ffeded;
+
+    color: #a32222;
+
+}
+
+
+.small {
+
+    margin-top: 15px;
+
+    font-size: 12px;
+
+    color: #6c7480;
+
+    line-height: 1.5;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+<div class="card">
+
+
+<h1>
+Original Document Record
+</h1>
+
+
+<form id="documentForm">
+
+
+<label
+class="required"
+for="action">
+
+Please select whether Receiving or Surrendering original documents
+
+</label>
+
+
+<select
+id="action"
+required>
+
+<option value="">
+Please select
+</option>
+
+<option value="Receiving">
+Receiving
+</option>
+
+<option value="Surrendering">
+Surrendering
+</option>
+
+</select>
+
+
+
+<label
+class="required"
+for="studentName">
+
+Student Name
+
+</label>
+
+
+<input
+id="studentName"
+type="text"
+required
+autocomplete="name"
+>
+
+
+
+<label
+class="required"
+for="receiverName">
+
+Receiver's Name
+(In case of Receiving original documents please mention respective Associate Name)
+
+</label>
+
+
+<input
+id="receiverName"
+type="text"
+required
+>
+
+
+
+<label
+class="required">
+
+Original Documents Received or Surrendered
+
+</label>
+
+
+<div id="documents"></div>
+
+
+
+<label
+for="otherDocuments">
+
+Other Documents if Any
+
+</label>
+
+
+<input
+id="otherDocuments"
+type="text"
+>
+
+
+
+<label
+class="required"
+for="employeeId">
+
+Employee ID
+
+</label>
+
+
+<input
+id="employeeId"
+type="text"
+required
+autocomplete="username"
+>
+
+
+
+<button
+id="submitButton"
+type="submit">
+
+VERIFY & SUBMIT
+
+</button>
+
+
+</form>
+
+
+<div id="status"></div>
+
+
+<div class="small">
+
+Your fingerprint, Face ID or Touch ID information is never uploaded.
+The device performs biometric authentication and the server receives
+only the cryptographic WebAuthn authentication result.
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+<script>
+
+
+const {
+    startAuthentication
+} = SimpleWebAuthnBrowser;
+
+
+const DOCUMENTS = [
+
+    "10th Marksheet",
+
+    "12th Marksheet",
+
+    "Student Aadhar",
+
+    "Parent Aadhar",
+
+    "Student Passport",
+
+    "Parent Passport",
+
+    "School Transfer Cerificate",
+
+    "Student PAN",
+
+    "Parent PAN",
+
+    "Birth Certificate"
+
+];
+
+
+const documentsContainer =
+    document.getElementById(
+        "documents"
+    );
+
+
+DOCUMENTS.forEach(
+    function(documentName, index) {
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "document";
+
+
+        wrapper.innerHTML = `
+
+            <input
+                type="checkbox"
+                id="doc${index}"
+                value="${documentName}"
+            >
+
+            <label
+                for="doc${index}"
+            >
+                ${documentName}
+            </label>
+
+        `;
+
+
+        documentsContainer.appendChild(
+            wrapper
+        );
+
+    }
+);
+
+
+
+function status(message, success) {
+
+    const element =
+        document.getElementById(
+            "status"
+        );
+
+
+    element.textContent =
+        message;
+
+
+    element.className =
+        success
+            ? "success"
+            : "error";
+
+}
+
+
+
+document
+.getElementById("documentForm")
+.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const button =
+            document.getElementById(
+                "submitButton"
+            );
+
+
+        const action =
+            document
+                .getElementById("action")
+                .value;
+
+
+        const studentName =
+            document
+                .getElementById("studentName")
+                .value
+                .trim();
+
+
+        const receiverName =
+            document
+                .getElementById("receiverName")
+                .value
+                .trim();
+
+
+        const otherDocuments =
+            document
+                .getElementById("otherDocuments")
+                .value
+                .trim();
+
+
+        const employeeId =
+            document
+                .getElementById("employeeId")
+                .value
+                .trim();
+
+
+        const documents =
+            Array
+                .from(
+                    document.querySelectorAll(
+                        "#documents input:checked"
+                    )
+                )
+                .map(
+                    checkbox =>
+                        checkbox.value
+                );
+
+
+
+        /*
+         * Mandatory validation
+         */
+
+        if (!action) {
+
+            status(
+                "Please select Receiving or Surrendering.",
+                false
+            );
+
+            return;
+
+        }
+
+
+        if (!studentName) {
+
+            status(
+                "Student Name is required.",
+                false
+            );
+
+            return;
+
+        }
+
+
+        if (!receiverName) {
+
+            status(
+                "Receiver's Name is required.",
+                false
+            );
+
+            return;
+
+        }
+
+
+        if (!employeeId) {
+
+            status(
+                "Employee ID is required.",
+                false
+            );
+
+            return;
+
+        }
+
+
+        if (documents.length === 0) {
+
+            status(
+                "Please select at least one original document.",
+                false
+            );
+
+            return;
+
+        }
+
+
+
+        /*
+         * Check WebAuthn
+         */
+
+        if (!window.PublicKeyCredential) {
+
+            status(
+                "This device/browser does not support biometric WebAuthn.",
+                false
+            );
+
+            return;
+
+        }
+
+
+
+        button.disabled = true;
+
+
+        try {
+
+
+            status(
+                "Preparing biometric verification...",
+                true
+            );
+
+
+
+            /*
+             * Get authentication challenge
+             */
+
+            const optionsResponse =
+                await fetch(
+                    "/api/auth/options",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                employeeId:
+                                    employeeId
+                            })
+
+                    }
+                );
+
+
+
+            const options =
+                await optionsResponse.json();
+
+
+
+            if (!optionsResponse.ok) {
+
+                throw new Error(
+                    options.error ||
+                    "Employee biometric is not registered."
+                );
+
+            }
+
+
+
+            status(
+                "Please complete fingerprint / Face ID / Touch ID verification.",
+                true
+            );
+
+
+
+            /*
+             * Device biometric
+             */
+
+            const authentication =
+                await startAuthentication({
+                    optionsJSON:
+                        options
+                });
+
+
+
+            status(
+                "Biometric verified. Submitting document record...",
+                true
+            );
+
+
+
+            /*
+             * Send verified authentication
+             * + form data to backend
+             */
+
+            const verifyResponse =
+                await fetch(
+                    "/api/auth/verify",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                employeeId:
+                                    employeeId,
+
+                                response:
+                                    authentication,
+
+                                form: {
+
+                                    action:
+                                        action,
+
+                                    studentName:
+                                        studentName,
+
+                                    receiverName:
+                                        receiverName,
+
+                                    documents:
+                                        documents,
+
+                                    otherDocuments:
+                                        otherDocuments
+
+                                }
+
+                            })
+
+                    }
+                );
+
+
+
+            const result =
+                await verifyResponse.json();
+
+
+
+            if (
+                !verifyResponse.ok ||
+                !result.submitted
+            ) {
+
+                throw new Error(
+                    result.error ||
+                    "Google Form submission failed."
+                );
+
+            }
+
+
+
+            status(
+                "✓ Biometric verified and document record submitted successfully.",
+                true
+            );
+
+
+            document
+                .getElementById(
+                    "documentForm"
+                )
+                .reset();
+
+
+        }
+
+        catch(error) {
+
+
+            console.error(error);
+
+
+            status(
+                error.message ||
+                "Biometric verification failed.",
+                false
+            );
+
+        }
+
+        finally {
+
+            button.disabled =
+                false;
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+
+</html>
