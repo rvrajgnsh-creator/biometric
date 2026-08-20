@@ -27,6 +27,6 @@ database_id = "YOUR_D1_DATABASE_ID"
 
 RP_NAME = "Document Attendance"
 
-RP_ID = "YOUR_WORKER_DOMAIN"
+RP_ID = "biometric.rv-rajgnsh.workers.dev"
 
-ORIGIN = "https://YOUR_WORKER_DOMAIN"
+ORIGIN = "https://biometric.rv-rajgnsh.workers.dev"
