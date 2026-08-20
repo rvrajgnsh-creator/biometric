@@ -1,0 +1,32 @@
+name = "document-biometric-attendance"
+
+main = "src/index.js"
+
+compatibility_date = "2026-08-20"
+
+compatibility_flags = [
+    "nodejs_compat"
+]
+
+
+[assets]
+
+directory = "./public"
+
+
+[[d1_databases]]
+
+binding = "DB"
+
+database_name = "document-attendance"
+
+database_id = "YOUR_D1_DATABASE_ID"
+
+
+[vars]
+
+RP_NAME = "Document Attendance"
+
+RP_ID = "YOUR_WORKER_DOMAIN"
+
+ORIGIN = "https://YOUR_WORKER_DOMAIN"
